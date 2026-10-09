@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RL Workbench project contract v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "algorithm": {
+            "type": "string",
+            "minLength": 1
+          },
+          "framework": {
+            "type": "string",
+            "minLength": 1
+          },
+          "simulator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "environment": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z_]\\w*(\\.[a-zA-Z_]\\w*)*:[a-zA-Z_]\\w*$"
+          },
+          "train": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z_]\\w*(\\.[a-zA-Z_]\\w*)*:[a-zA-Z_]\\w*$"
+          },
+          "step_dt": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "reward_scale": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "none",
+              "dt"
+            ]
+          },
+          "observation_groups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "terminations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "curricula": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "rewards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-zA-Z_]\\w*$"
+                },
+                "function": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-zA-Z_]\\w*(\\.[a-zA-Z_]\\w*)*:[a-zA-Z_]\\w*$"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "name",
+                "function",
+                "weight",
+                "enabled",
+                "description"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "defaults": {
+            "type": "object",
+            "properties": {
+              "num_envs": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "total_timesteps": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "seed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "network": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "enum": [
+                      "mlp"
+                    ]
+                  },
+                  "actor": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "minItems": 1
+                  },
+                  "critic": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "minItems": 1
+                  },
+                  "activation": {
+                    "type": "string",
+                    "minLength": 1,
+                    "enum": [
+                      "tanh",
+                      "relu"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "actor",
+                  "critic",
+                  "activation"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "num_envs",
+              "total_timesteps",
+              "seed",
+              "network"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "algorithm",
+          "framework",
+          "simulator",
+          "environment",
+          "train",
+          "step_dt",
+          "reward_scale",
+          "observation_groups",
+          "terminations",
+          "curricula",
+          "rewards",
+          "defaults"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "source_root",
+    "tasks"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>RL Workbench · 强化学习工作台</title><meta name="description" content="在本机训练 PPO、拆解奖励并回放策略行为。"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><script defer src="/translations.js"></script><script defer src="/i18n.js"></script><script defer src="/app.js"></script></head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/"><img src="/favicon.svg" alt="" width="34" height="34"><span>RL Workbench<small>强化学习工作台</small></span></a>
+  <div class="side-heading"><span>实验记录</span><span id="run-count">0</span></div>
+  <button id="new-run" class="new-button">＋ 新建实验</button>
+  <nav id="run-list" aria-label="实验列表"><p class="muted">还没有实验，开始第一次训练吧。</p></nav>
+  <div class="side-bottom"><span class="local-icon">◉</span><div>本地训练 · 本地保存<small id="connection">正在连接…</small></div></div>
+</aside>
+<main>
+  <header><div><div class="eyebrow">TRAIN · OBSERVE · ITERATE</div><h1 id="run-title">从一次实验开始</h1><p id="run-subtitle">调整奖励，看清策略如何学习。</p></div><div class="header-actions"><span class="tag">CartPole-v1</span><span class="tag">PPO / CPU</span><span id="status" class="status">准备就绪</span></div></header>
+  <div id="error-banner" class="error-banner" role="alert" hidden></div>
+  <section class="metrics" aria-label="训练概览">
+    <div><span>训练进度</span><strong id="metric-step">—</strong><small id="metric-budget">等待开始</small><div class="progress"><i id="progress-bar"></i></div></div>
+    <div><span>最近 20 回合奖励</span><strong id="metric-reward">—</strong><small>当前奖励公式 · 训练采样</small></div>
+    <div><span>最新评估存活步数</span><strong id="metric-eval">—</strong><small>3 个固定种子 · 上限 500 步</small></div>
+    <div><span>训练采样速度</span><strong id="metric-fps">—</strong><small id="metric-time">含评估与暂停的平均值</small></div>
+  </section>
+  <div class="workspace">
+    <div class="main-column">
+      <section class="panel scene-panel">
+        <div class="panel-heading"><div><h2>观察策略</h2><span id="scene-caption" class="muted">开始训练后，查看实时状态或评估回放</span></div><div class="segmented"><button id="view-live" class="selected">实时采样</button><button id="view-replay">评估回放</button></div></div>
+        <div class="scene"><canvas id="scene" width="900" height="300" aria-label="根据真实状态绘制的倒立摆示意图"></canvas><div class="scene-top"><span id="scene-label">等待训练</span><span id="scene-step">CartPole · 状态示意</span></div><div id="scene-empty">让小车学会保持平衡<small>点击右侧「开始训练」，运行真实 PPO 实验</small></div></div>
+        <div id="replay-controls" hidden><div class="replay-selects"><label>评估节点<select id="eval-select"></select></label><label>评估种子<select id="episode-select"><option value="0">1000</option><option value="1">1001</option><option value="2">1002</option></select></label><button id="play" class="subtle">播放</button></div><div class="scrub"><input id="frame-slider" aria-label="回放步数" type="range" min="0" max="0" value="0"><span id="frame-label">0 / 0</span></div></div>
+        <div class="state-row"><div><span>位置</span><b id="state-x">—</b></div><div><span>速度</span><b id="state-v">—</b></div><div><span>杆角度</span><b id="state-angle">—</b></div><div><span>动作</span><b id="state-action">—</b></div><div><span>单步奖励</span><b id="state-reward">—</b></div></div>
+      </section>
+      <section class="panel chart-panel"><div class="panel-heading"><div><h2>训练曲线</h2><span id="chart-description" class="muted">每个训练回合的奖励与最近 20 回合均值</span></div><select id="chart-mode" aria-label="曲线类型"><option value="reward">回合奖励</option><option value="evaluation">评估存活步数</option></select></div><canvas id="chart" height="220" aria-label="训练曲线"></canvas><div class="chart-footer"><div id="chart-legend"><i></i>当前实验</div><label>对比实验<select id="compare"><option value="">不对比</option></select></label></div><p id="comparison-note" class="note">奖励权重不同时，请切换「评估存活步数」比较表现。</p></section>
+      <section class="panel diagnostics"><div class="panel-heading"><h2>训练信号</h2><span class="muted">最近一次策略更新</span></div><div class="signals"><div><span>近似 KL</span><b id="signal-kl">—</b></div><div><span>裁剪比例</span><b id="signal-clip">—</b></div><div><span>价值解释方差</span><b id="signal-variance">—</b></div></div><p class="note">这些指标辅助观察更新幅度和价值预测，不能单独判定训练好坏。</p></section>
+    </div>
+    <div class="config-column">
+      <section class="panel config-panel"><div class="panel-heading"><h2 id="config-heading">新实验配置</h2><button id="copy-config" class="text-button" hidden>复制配置</button></div>
+      <form id="config-form"><fieldset id="config-fields">
+        <label>实验名称<input id="name" name="name" maxlength="60" value="平衡练习 01" required></label>
+        <div class="form-row"><label>训练步数<select id="total-steps"><option value="2048">2,048 · 快速检查</option><option value="20480" selected>20,480 · 初次训练</option><option value="51200">51,200 · 充分训练</option><option value="102400">102,400 · 长训练</option></select></label><label>随机种子<input id="seed" type="number" min="0" max="2147483647" step="1" value="42" required></label></div>
+        <label>学习率<select id="learning-rate"><option value="0.0001">0.0001</option><option value="0.0003" selected>0.0003 · 默认</option><option value="0.001">0.001</option></select></label>
+        <div class="reward-heading"><h3>奖励权重</h3><button type="button" id="reset-weights" class="text-button">恢复默认</button></div>
+        <p class="note">正向奖励鼓励存活，惩罚约束偏离与失败。</p>
+        <div id="weight-fields"></div>
+        <details><summary>奖励如何计算？</summary><p>每一步：存活权重 × 1 − 倾斜权重 × (角度 / 12°)² − 偏移权重 × (位置 / 2.4m)² − 失败权重 × 是否失败。</p><p>奖励按动作后的状态计算。角度或位置越界为失败；满 500 步正常截断，不追加失败惩罚。保留原始环境奖励，无奖励归一化或裁剪。</p></details>
+      </fieldset><button id="start" class="primary" type="submit">▶ 开始训练</button></form>
+      <div id="run-controls" hidden><button id="pause" class="subtle">暂停训练</button><button id="stop" class="danger">停止并保存</button></div>
+      <p id="config-note" class="note">配置在实验开始后固定。修改奖励时，复制为新实验。</p>
+      <div id="downloads" hidden><a id="export" class="download" href="#">导出实验 JSON</a><a id="model-download" class="download" href="#" hidden>下载最终模型</a><a id="best-download" class="download" href="#" hidden>下载最佳评估模型</a></div>
+      </section>
+      <section class="panel breakdown"><div class="panel-heading"><h2>这一刻的奖励</h2><span id="reward-source" class="muted">等待数据</span></div><div id="reward-bars"></div><div class="reward-total"><span>实际单步奖励</span><b id="reward-total">—</b></div><p id="reward-footnote" class="note">与上方画面同一步，正负贡献分别显示。</p></section>
+      <section id="preview-panel" class="panel" hidden><div class="panel-heading"><h2>试算新权重</h2><span class="tag">已有轨迹</span></div><p class="note">使用配置草稿中的权重，对当前回放回合重新计分。不会改变已训练的策略。</p><div class="preview-results"><div><span>原始回合总分</span><b id="original-return">—</b></div><div><span>新权重试算</span><b id="preview-return">—</b></div></div></section>
+    </div>
+  </div>
+  <footer>RL Workbench <span>v0.1 · CartPole / PPO</span><span>画面为状态示意；实时采样每秒刷新，完整评估轨迹可逐步回放。</span></footer>
+</main><div id="toast" role="status" hidden></div>
+</body></html>
